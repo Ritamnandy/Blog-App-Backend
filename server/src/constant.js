@@ -2,4 +2,4 @@
 
 const dbName = "blogApp"
 
-export {debugger}
+export { dbName }
