@@ -1,6 +1,8 @@
 
 import express from 'express'
 import cors from 'cors'
+import session from 'express-session'
+import passport from 'passport'
 import cookieParser from 'cookie-parser'
 import compression from 'compression'
 import requestIp from 'request-ip'
@@ -21,6 +23,15 @@ app.use( express.static( 'public' ) )
 app.use( cookieParser() )
 app.use( compression() )
 app.use( requestIp.mw() )
+app.use( session(
+    {
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: true,
+    }
+) )
+app.use( passport.initialize() )
+app.use( passport.session() )
 const limiter = rateLimit(
     {
         windowMs: 15 * 60 * 1000,
