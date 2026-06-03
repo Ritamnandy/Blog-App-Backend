@@ -2,4 +2,10 @@
 
 const dbName = "blogApp"
 
-export { dbName }
+const status = [
+    "draft",
+    "published",
+    "archived"
+]
+
+export { dbName, status }
