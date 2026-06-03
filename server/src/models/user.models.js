@@ -2,7 +2,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-
+import { userLoginType } from "../constant.js"
 
 const userSchema = new mongoose.Schema( {
     firstName: {
@@ -28,6 +28,16 @@ const userSchema = new mongoose.Schema( {
         type: String,
         required: true,
         trim: true
+    },
+    googleId: {
+        type: String,
+        trim: true,
+        default: "",
+    },
+    loginType: {
+        type: String,
+        enum: userLoginType,
+        default: userLoginType.EMAIL_PASSWORD
     },
     avatar: {
         type: String,

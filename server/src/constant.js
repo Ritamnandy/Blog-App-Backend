@@ -7,5 +7,8 @@ const status = [
     "published",
     "archived"
 ]
-
-export { dbName, status }
+const userLoginType = {
+    GOOGLE: "GOOGLE",
+    EMAIL_PASSWORD: "EMAIL_PASSWORD",
+}
+export { dbName, status, userLoginType }
