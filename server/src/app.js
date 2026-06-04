@@ -1,5 +1,4 @@
-import dotenv from 'dotenv'
-dotenv.config()
+import './config/env.config.js'
 import './passport/oauth.js'
 import express from 'express'
 import cors from 'cors'
