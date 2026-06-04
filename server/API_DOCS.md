@@ -1,1279 +1,447 @@
-# Blog App Backend - API Documentation
+# Blog App Backend API Documentation
 
-## 📖 Table of Contents
+This document describes the API that is currently mounted by the server code.
 
-1. [API Base URL](#api-base-url)
-2. [Endpoint Summary](#endpoint-summary)
-3. [Authentication APIs](#authentication-apis)
-4. [User APIs](#user-apis)
-5. [Blog APIs](#blog-apis)
-6. [Error Responses](#error-responses)
-7. [Request/Response Examples](#requestresponse-examples)
-8. [Authentication](#authentication)
-9. [Quick Test Commands](#quick-test-commands)
-10. [Environment Setup](#environment-setup)
-11. [Data Models Overview](#data-models-overview)
-12. [API Flow Examples](#api-flow-examples)
-13. [Common Data Fields](#common-data-fields)
-14. [Testing with Postman](#testing-with-postman)
-15. [API Versioning](#api-versioning)
+Base URL:
 
----
-
-## 📋 API Base URL
-
-**Development**: `http://localhost:5000`
-
-**Production**: `https://your-domain.com`
-
----
-
-## 📌 Endpoint Summary
-
-### Authentication Endpoints
-| Method | Endpoint | Auth Required | Description |
-|--------|----------|---------------|-------------|
-| `POST` | `/api/auth/register` | ❌ No | Register new user |
-| `POST` | `/api/auth/login` | ❌ No | User login |
-| `POST` | `/api/auth/refresh-token` | ❌ No | Refresh access token |
-| `POST` | `/api/auth/logout` | ✅ Yes | User logout |
-
-### User Endpoints
-| Method | Endpoint | Auth Required | Description |
-|--------|----------|---------------|-------------|
-| `GET` | `/api/users/profile` | ✅ Yes | Get current user profile |
-| `PATCH` | `/api/users/profile` | ✅ Yes | Update user profile |
-| `POST` | `/api/users/change-password` | ✅ Yes | Change user password |
-| `GET` | `/api/users/:userId` | ❌ No | Get user public profile |
-
-### Blog Endpoints
-| Method | Endpoint | Auth Required | Description |
-|--------|----------|---------------|-------------|
-| `POST` | `/api/blogs` | ✅ Yes | Create blog post |
-| `GET` | `/api/blogs` | ❌ No | Get all blogs |
-| `GET` | `/api/blogs/:blogId` | ❌ No | Get single blog |
-| `PATCH` | `/api/blogs/:blogId` | ✅ Yes | Update blog (author only) |
-| `DELETE` | `/api/blogs/:blogId` | ✅ Yes | Delete blog (author only) |
-| `POST` | `/api/blogs/:blogId/comments` | ✅ Yes | Add comment |
-| `GET` | `/api/blogs/:blogId/comments` | ❌ No | Get comments |
-| `DELETE` | `/api/blogs/:blogId/comments/:commentId` | ✅ Yes | Delete comment |
-| `POST` | `/api/blogs/:blogId/like` | ✅ Yes | Like/unlike blog |
-
-### Protected Endpoint Authentication
-
-Use either a bearer token:
-
+```text
+http://localhost:5000/api/v1
 ```
+
+Auth routes are mounted from `src/app.js`:
+
+```text
+/api/v1/auth
+```
+
+## Authentication
+
+Protected endpoints accept the access token in either place:
+
+```text
 Authorization: Bearer <accessToken>
 ```
 
-or an access token cookie:
+or:
 
+```text
+Cookie: accessToken=<accessToken>
 ```
-Cookie: accessToken=<token>
-```
 
-### Common Response Patterns
+Login and register responses also set:
 
-Successful responses use this shape:
+- `accessToken`
+- `refreshToken`
+
+Both cookies are `httpOnly` and `secure`.
+
+## Response Shapes
+
+Success responses use `ApiResponse`:
 
 ```json
 {
   "statusCode": 200,
+  "data": {},
   "message": "Operation successful",
-  "success": true,
-  "data": {}
+  "success": true
 }
 ```
 
-Error responses use this shape:
+Error responses use `ApiError`:
 
 ```json
 {
   "statusCode": 400,
+  "data": null,
   "message": "Error message",
   "success": false,
-  "data": null,
-  "error": ["Specific error"]
+  "error": []
 }
 ```
 
-### Status Codes Reference
+Validation errors return status `422` and include field-level messages:
 
-| Code | Meaning | Use Case |
-|------|---------|----------|
-| `200` | OK | Request successful |
-| `201` | Created | Resource created successfully |
-| `204` | No Content | Request successful, no response body |
-| `400` | Bad Request | Invalid input or validation error |
-| `401` | Unauthorized | Missing or invalid authentication |
-| `403` | Forbidden | Authenticated but insufficient permissions |
-| `404` | Not Found | Resource does not exist |
-| `409` | Conflict | Resource already exists |
-| `422` | Unprocessable Entity | Validation error |
-| `500` | Server Error | Internal server error |
-
----
-
-## 🔐 Authentication APIs
-
-### 1. User Registration
-
-**Endpoint**: `POST /api/auth/register`
-
-**Description**: Register a new user account with email and password.
-
-**Request Headers**:
+```json
+{
+  "statusCode": 422,
+  "data": null,
+  "message": "Recived data is not valid",
+  "success": false,
+  "error": [
+    {
+      "email": "Email is invalid"
+    }
+  ]
+}
 ```
+
+## Endpoint Summary
+
+| Method | Endpoint | Auth | Description |
+| --- | --- | --- | --- |
+| `POST` | `/auth/register` | No | Register a user and receive tokens |
+| `POST` | `/auth/login` | No | Log in and receive tokens |
+| `POST` | `/auth/refresh` | No | Refresh tokens using the current refresh implementation |
+| `POST` | `/auth/logout` | Yes | Log out the authenticated user |
+| `POST` | `/auth/avatar` | Yes | Upload the authenticated user's avatar |
+| `GET` | `/auth/google` | No | Start Google OAuth |
+| `GET` | `/auth/google/callback` | No | Google OAuth callback |
+
+Full URLs use the base prefix. Example: `POST http://localhost:5000/api/v1/auth/register`.
+
+## Register User
+
+```http
+POST /api/v1/auth/register
 Content-Type: application/json
 ```
 
-**Request Body**:
+Request body:
+
 ```json
 {
-  "firstName": "John",
-  "lastName": "Doe",
-  "email": "john.doe@example.com",
-  "password": "SecurePassword123!"
+  "firstName": "Ritam",
+  "lastName": "Das",
+  "email": "ritam@example.com",
+  "password": "password123"
 }
 ```
 
-**Response** (201 - Created):
+Validation rules:
+
+| Field | Rule |
+| --- | --- |
+| `firstName` | Required, minimum 3 characters |
+| `lastName` | Required, minimum 3 characters |
+| `email` | Required, valid email |
+| `password` | Required |
+
+Success response: `201 Created`
+
 ```json
 {
   "statusCode": 201,
-  "message": "User registered successfully",
-  "success": true,
   "data": {
-    "_id": "507f1f77bcf86cd799439011",
-    "firstName": "john",
-    "lastName": "doe",
-    "email": "john.doe@example.com",
-    "avatar": "",
-    "createdAt": "2026-06-02T10:30:00.000Z",
-    "updatedAt": "2026-06-02T10:30:00.000Z"
-  }
-}
-```
-
-**Error Response** (400 - Bad Request):
-```json
-{
-  "statusCode": 400,
-  "message": "Email already exists",
-  "success": false,
-  "data": null,
-  "error": ["User with this email already registered"]
-}
-```
-
-**Status Codes**:
-- `201` - User created successfully
-- `400` - Invalid input or email already exists
-- `500` - Server error
-
----
-
-### 2. User Login
-
-**Endpoint**: `POST /api/auth/login`
-
-**Description**: Authenticate user and return access token and refresh token.
-
-**Request Headers**:
-```
-Content-Type: application/json
-```
-
-**Request Body**:
-```json
-{
-  "email": "john.doe@example.com",
-  "password": "SecurePassword123!"
-}
-```
-
-**Response** (200 - OK):
-```json
-{
-  "statusCode": 200,
-  "message": "User logged in successfully",
-  "success": true,
-  "data": {
+    "accessToken": "<jwt-access-token>",
+    "refreshToken": "<jwt-refresh-token>",
     "user": {
-      "_id": "507f1f77bcf86cd799439011",
-      "firstName": "john",
-      "lastName": "doe",
-      "email": "john.doe@example.com",
-      "avatar": "https://cloudinary.com/...",
-      "createdAt": "2026-06-02T10:30:00.000Z"
-    },
-    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
+      "_id": "665f0b8b1a2b3c4d5e6f7890",
+      "firstName": "Ritam",
+      "lastName": "Das",
+      "email": "ritam@example.com",
+      "googleId": "",
+      "loginType": "EMAIL_PASSWORD",
+      "avatar": "",
+      "createdAt": "2026-06-04T00:00:00.000Z",
+      "updatedAt": "2026-06-04T00:00:00.000Z"
+    }
+  },
+  "message": "User created successfully",
+  "success": true
 }
 ```
 
-**Error Response** (401 - Unauthorized):
+Common errors:
+
+- `400` when a user with the same email already exists.
+- `422` when validation fails.
+- `500` when user creation fails.
+
+## Login User
+
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+```
+
+Request body:
+
 ```json
 {
-  "statusCode": 401,
-  "message": "Invalid credentials",
-  "success": false,
-  "data": null,
-  "error": ["Incorrect email or password"]
+  "email": "ritam@example.com",
+  "password": "password123"
 }
 ```
 
-**Cookies Set**:
-- `accessToken` - Expires in 7 days
-- `refreshToken` - Expires in 30 days
+Validation rules:
 
-**Status Codes**:
-- `200` - Login successful
-- `400` - Missing email or password
-- `401` - Invalid credentials
-- `500` - Server error
+| Field | Rule |
+| --- | --- |
+| `email` | Required, valid email |
+| `password` | Required |
 
----
+Success response: `200 OK`
 
-### 3. Refresh Access Token
-
-**Endpoint**: `POST /api/auth/refresh-token`
-
-**Description**: Generate a new access token using the refresh token.
-
-**Request Headers**:
-```
-Content-Type: application/json
-Cookie: refreshToken=<token>
-```
-
-**Request Body**:
-```json
-{}
-```
-
-**Response** (200 - OK):
 ```json
 {
   "statusCode": 200,
+  "data": {
+    "accessToken": "<jwt-access-token>",
+    "refreshToken": "<jwt-refresh-token>",
+    "user": {
+      "_id": "665f0b8b1a2b3c4d5e6f7890",
+      "firstName": "Ritam",
+      "lastName": "Das",
+      "email": "ritam@example.com",
+      "googleId": "",
+      "loginType": "EMAIL_PASSWORD",
+      "avatar": "",
+      "createdAt": "2026-06-04T00:00:00.000Z",
+      "updatedAt": "2026-06-04T00:00:00.000Z"
+    }
+  },
+  "message": "User logged in successfully",
+  "success": true
+}
+```
+
+Common errors:
+
+- `401` for invalid email or password.
+- `422` when validation fails.
+
+## Refresh Tokens
+
+```http
+POST /api/v1/auth/refresh
+Content-Type: application/json
+```
+
+Current request body expected by the controller:
+
+```json
+{
+  "Token": "<refresh-token>"
+}
+```
+
+Success response when working:
+
+```json
+{
+  "statusCode": 200,
+  "data": {
+    "accessToken": "<new-access-token>",
+    "refreshToken": "<new-refresh-token>"
+  },
   "message": "Access token refreshed successfully",
-  "success": true,
-  "data": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
+  "success": true
 }
 ```
 
-**Error Response** (401 - Unauthorized):
-```json
-{
-  "statusCode": 401,
-  "message": "Unauthorized request",
-  "success": false,
-  "data": null,
-  "error": ["Invalid refresh token"]
-}
-```
+Known implementation note: this controller currently destructures `Token` from `req.cookies || req.headers || req.body` and then calls `generateTokenPair(userId)` even though `userId` is not defined in that scope. Until fixed, this endpoint may return a server error even with a valid refresh token.
 
-**Status Codes**:
-- `200` - Token refreshed successfully
-- `401` - Invalid or expired refresh token
-- `500` - Server error
+## Logout User
 
----
-
-### 4. User Logout
-
-**Endpoint**: `POST /api/auth/logout`
-
-**Description**: Logout user and clear authentication tokens.
-
-**Request Headers**:
-```
+```http
+POST /api/v1/auth/logout
 Authorization: Bearer <accessToken>
-or
-Cookie: accessToken=<token>
 ```
 
-**Request Body**:
-```json
-{}
-```
+Success response: `200 OK`
 
-**Response** (200 - OK):
 ```json
 {
   "statusCode": 200,
+  "data": null,
   "message": "User logged out successfully",
-  "success": true,
-  "data": null
+  "success": true
 }
 ```
 
-**Error Response** (401 - Unauthorized):
-```json
-{
-  "statusCode": 401,
-  "message": "Unauthorized request",
-  "success": false,
-  "data": null,
-  "error": ["access token not found"]
-}
-```
+Behavior:
 
-**Status Codes**:
-- `200` - Logout successful
-- `401` - Unauthorized
-- `500` - Server error
+- Requires a valid access token.
+- Sets the user's stored `refreshToken` to a blank string.
+- Clears `accessToken` and `refreshToken` cookies.
 
----
+Common errors:
 
-## 👤 User APIs
+- `401` when the access token is missing, invalid, or does not map to a user.
 
-### 1. Get Current User Profile
+## Upload Avatar
 
-**Endpoint**: `GET /api/users/profile`
-
-**Description**: Retrieve the profile of the currently logged-in user.
-
-**Request Headers**:
-```
+```http
+POST /api/v1/auth/avatar
 Authorization: Bearer <accessToken>
-or
-Cookie: accessToken=<token>
-```
-
-**Response** (200 - OK):
-```json
-{
-  "statusCode": 200,
-  "message": "User profile fetched successfully",
-  "success": true,
-  "data": {
-    "_id": "507f1f77bcf86cd799439011",
-    "firstName": "john",
-    "lastName": "doe",
-    "email": "john.doe@example.com",
-    "avatar": "https://cloudinary.com/...",
-    "createdAt": "2026-06-02T10:30:00.000Z",
-    "updatedAt": "2026-06-02T10:30:00.000Z"
-  }
-}
-```
-
-**Error Response** (401 - Unauthorized):
-```json
-{
-  "statusCode": 401,
-  "message": "Unauthorized request",
-  "success": false,
-  "data": null,
-  "error": ["Invalid access token"]
-}
-```
-
-**Status Codes**:
-- `200` - Profile fetched successfully
-- `401` - Unauthorized
-- `500` - Server error
-
----
-
-### 2. Update User Profile
-
-**Endpoint**: `PATCH /api/users/profile`
-
-**Description**: Update user profile information (first name, last name, avatar).
-
-**Request Headers**:
-```
 Content-Type: multipart/form-data
-Authorization: Bearer <accessToken>
-or
-Cookie: accessToken=<token>
 ```
 
-**Request Body** (form-data):
-```
-firstName: "Jane"
-lastName: "Smith"
-avatar: <image_file>
-```
+Form data:
 
-**Response** (200 - OK):
+| Field | Type | Required |
+| --- | --- | --- |
+| `avatar` | File | Yes |
+
+Success response when working:
+
 ```json
 {
   "statusCode": 200,
-  "message": "User profile updated successfully",
-  "success": true,
   "data": {
-    "_id": "507f1f77bcf86cd799439011",
-    "firstName": "jane",
-    "lastName": "smith",
-    "email": "john.doe@example.com",
-    "avatar": "https://cloudinary.com/...",
-    "updatedAt": "2026-06-02T11:00:00.000Z"
-  }
+    "avatar": "https://res.cloudinary.com/example/image/upload/example.png"
+  },
+  "message": "Avatar uploaded successfully",
+  "success": true
 }
 ```
 
-**Error Response** (400 - Bad Request):
-```json
-{
-  "statusCode": 400,
-  "message": "Invalid update data",
-  "success": false,
-  "data": null,
-  "error": ["Please provide at least one field to update"]
-}
+Known implementation note: the controller currently uses `const { avatarPath } = req.file?.path`, but `req.file.path` is a string. This should be changed to read the file path directly before avatar uploads can reliably work.
+
+## Google OAuth
+
+### Start Google OAuth
+
+```http
+GET /api/v1/auth/google
 ```
 
-**Status Codes**:
-- `200` - Profile updated successfully
-- `400` - Invalid input data
-- `401` - Unauthorized
-- `500` - Server error
+Redirects the user to Google OAuth with these scopes:
 
----
+- `email`
+- `profile`
 
-### 3. Change Password
+### Google Callback
 
-**Endpoint**: `POST /api/users/change-password`
-
-**Description**: Change user password.
-
-**Request Headers**:
-```
-Content-Type: application/json
-Authorization: Bearer <accessToken>
-or
-Cookie: accessToken=<token>
+```http
+GET /api/v1/auth/google/callback
 ```
 
-**Request Body**:
-```json
-{
-  "oldPassword": "OldPassword123!",
-  "newPassword": "NewPassword456!"
-}
-```
+Passport handles the Google callback. On success, the server issues JWT cookies and returns:
 
-**Response** (200 - OK):
 ```json
 {
   "statusCode": 200,
-  "message": "Password changed successfully",
-  "success": true,
-  "data": null
-}
-```
-
-**Error Response** (400 - Bad Request):
-```json
-{
-  "statusCode": 400,
-  "message": "Invalid password",
-  "success": false,
-  "data": null,
-  "error": ["Old password is incorrect"]
-}
-```
-
-**Status Codes**:
-- `200` - Password changed successfully
-- `400` - Invalid old password
-- `401` - Unauthorized
-- `500` - Server error
-
----
-
-## 📝 Blog APIs
-
-### 1. Create Blog Post
-
-**Endpoint**: `POST /api/blogs`
-
-**Description**: Create a new blog post.
-
-**Request Headers**:
-```
-Content-Type: application/json
-Authorization: Bearer <accessToken>
-or
-Cookie: accessToken=<token>
-```
-
-**Request Body**:
-```json
-{
-  "title": "Getting Started with Node.js",
-  "description": "A beginner's guide to Node.js development",
-  "content": "Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine...",
-  "tags": ["nodejs", "javascript", "backend"]
-}
-```
-
-**Response** (201 - Created):
-```json
-{
-  "statusCode": 201,
-  "message": "Blog post created successfully",
-  "success": true,
   "data": {
-    "_id": "607f1f77bcf86cd799439012",
-    "title": "Getting Started with Node.js",
-    "description": "A beginner's guide to Node.js development",
-    "content": "Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine...",
-    "author": "507f1f77bcf86cd799439011",
-    "tags": ["nodejs", "javascript", "backend"],
-    "createdAt": "2026-06-02T10:30:00.000Z",
-    "updatedAt": "2026-06-02T10:30:00.000Z"
-  }
+    "accessToken": "<jwt-access-token>",
+    "refreshToken": "<jwt-refresh-token>",
+    "user": {
+      "_id": "665f0b8b1a2b3c4d5e6f7890",
+      "firstName": "Ritam",
+      "lastName": "Das",
+      "email": "ritam@example.com",
+      "googleId": "<google-profile-id>",
+      "loginType": "GOOGLE",
+      "avatar": ""
+    }
+  },
+  "message": "Google logged in successfully",
+  "success": true
 }
 ```
 
-**Status Codes**:
-- `201` - Blog post created successfully
-- `400` - Invalid input data
-- `401` - Unauthorized
-- `500` - Server error
+On failure, Passport redirects to `/login`.
 
----
+## Environment Variables
 
-### 2. Get All Blog Posts
+Create `server/.env` because `src/config/env.config.js` loads `.env` from the `server` directory.
 
-**Endpoint**: `GET /api/blogs`
+```env
+PORT=5000
+CORS_ORIGIN=http://localhost:3000
 
-**Description**: Retrieve all blog posts with pagination and filtering.
+MONGODB_URL=mongodb://127.0.0.1:27017
 
-**Query Parameters**:
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Items per page (default: 10)
-- `tag` (optional): Filter by tag
-- `search` (optional): Search by title or content
+JWT_TOKEN_SECRET=replace-with-access-token-secret
+JWT_TOKEN_EXPIRES_IN=1d
+REFRESH_TOKEN_SECRET=replace-with-refresh-token-secret
+REFRESH_TOKEN_EXPIRES_IN=10d
 
-**Request Example**:
-```
-GET /api/blogs?page=1&limit=10&tag=nodejs
-```
+SESSION_SECRET=replace-with-session-secret
 
-**Response** (200 - OK):
-```json
-{
-  "statusCode": 200,
-  "message": "Blog posts fetched successfully",
-  "success": true,
-  "data": {
-    "blogs": [
-      {
-        "_id": "607f1f77bcf86cd799439012",
-        "title": "Getting Started with Node.js",
-        "description": "A beginner's guide to Node.js development",
-        "author": {
-          "_id": "507f1f77bcf86cd799439011",
-          "firstName": "john",
-          "lastName": "doe",
-          "avatar": "https://cloudinary.com/..."
-        },
-        "tags": ["nodejs", "javascript", "backend"],
-        "views": 150,
-        "createdAt": "2026-06-02T10:30:00.000Z"
-      }
-    ],
-    "totalBlogs": 25,
-    "currentPage": 1,
-    "totalPages": 3
-  }
-}
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/v1/auth/google/callback
+
+CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
+CLOUDINARY_API_KEY=your-cloudinary-api-key
+CLOUDINARY_API_SECRET=your-cloudinary-api-secret
 ```
 
-**Status Codes**:
-- `200` - Blogs fetched successfully
-- `500` - Server error
+## Quick cURL Examples
 
----
+Register:
 
-### 3. Get Single Blog Post
-
-**Endpoint**: `GET /api/blogs/:blogId`
-
-**Description**: Retrieve a single blog post by ID.
-
-**Path Parameters**:
-- `blogId` (required): Blog post ID
-
-**Response** (200 - OK):
-```json
-{
-  "statusCode": 200,
-  "message": "Blog post fetched successfully",
-  "success": true,
-  "data": {
-    "_id": "607f1f77bcf86cd799439012",
-    "title": "Getting Started with Node.js",
-    "description": "A beginner's guide to Node.js development",
-    "content": "Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine...",
-    "author": {
-      "_id": "507f1f77bcf86cd799439011",
-      "firstName": "john",
-      "lastName": "doe"
-    },
-    "tags": ["nodejs", "javascript", "backend"],
-    "views": 150,
-    "createdAt": "2026-06-02T10:30:00.000Z"
-  }
-}
-```
-
-**Error Response** (404 - Not Found):
-```json
-{
-  "statusCode": 404,
-  "message": "Blog post not found",
-  "success": false,
-  "data": null,
-  "error": ["Blog post with this ID does not exist"]
-}
-```
-
-**Status Codes**:
-- `200` - Blog fetched successfully
-- `404` - Blog not found
-- `500` - Server error
-
----
-
-### 4. Update Blog Post
-
-**Endpoint**: `PATCH /api/blogs/:blogId`
-
-**Description**: Update a blog post (only by author).
-
-**Request Headers**:
-```
-Content-Type: application/json
-Authorization: Bearer <accessToken>
-```
-
-**Path Parameters**:
-- `blogId` (required): Blog post ID
-
-**Request Body**:
-```json
-{
-  "title": "Advanced Node.js Concepts",
-  "description": "Deep dive into Node.js",
-  "content": "Updated content...",
-  "tags": ["nodejs", "advanced"]
-}
-```
-
-**Response** (200 - OK):
-```json
-{
-  "statusCode": 200,
-  "message": "Blog post updated successfully",
-  "success": true,
-  "data": {
-    "_id": "607f1f77bcf86cd799439012",
-    "title": "Advanced Node.js Concepts",
-    "description": "Deep dive into Node.js",
-    "content": "Updated content...",
-    "tags": ["nodejs", "advanced"],
-    "updatedAt": "2026-06-02T11:30:00.000Z"
-  }
-}
-```
-
-**Error Response** (403 - Forbidden):
-```json
-{
-  "statusCode": 403,
-  "message": "Forbidden",
-  "success": false,
-  "data": null,
-  "error": ["You are not authorized to update this blog post"]
-}
-```
-
-**Status Codes**:
-- `200` - Blog updated successfully
-- `401` - Unauthorized
-- `403` - Forbidden (not the author)
-- `404` - Blog not found
-- `500` - Server error
-
----
-
-### 5. Delete Blog Post
-
-**Endpoint**: `DELETE /api/blogs/:blogId`
-
-**Description**: Delete a blog post (only by author).
-
-**Request Headers**:
-```
-Authorization: Bearer <accessToken>
-or
-Cookie: accessToken=<token>
-```
-
-**Path Parameters**:
-- `blogId` (required): Blog post ID
-
-**Response** (200 - OK):
-```json
-{
-  "statusCode": 200,
-  "message": "Blog post deleted successfully",
-  "success": true,
-  "data": null
-}
-```
-
-**Error Response** (403 - Forbidden):
-```json
-{
-  "statusCode": 403,
-  "message": "Forbidden",
-  "success": false,
-  "data": null,
-  "error": ["You are not authorized to delete this blog post"]
-}
-```
-
-**Status Codes**:
-- `200` - Blog deleted successfully
-- `401` - Unauthorized
-- `403` - Forbidden (not the author)
-- `404` - Blog not found
-- `500` - Server error
-
----
-
-### 6. Add Comment to Blog
-
-**Endpoint**: `POST /api/blogs/:blogId/comments`
-
-**Description**: Add a comment to a blog post.
-
-**Request Headers**:
-```
-Content-Type: application/json
-Authorization: Bearer <accessToken>
-```
-
-**Path Parameters**:
-- `blogId` (required): Blog post ID
-
-**Request Body**:
-```json
-{
-  "comment": "Great post! Very helpful."
-}
-```
-
-**Response** (201 - Created):
-```json
-{
-  "statusCode": 201,
-  "message": "Comment added successfully",
-  "success": true,
-  "data": {
-    "_id": "708f1f77bcf86cd799439013",
-    "comment": "Great post! Very helpful.",
-    "author": {
-      "_id": "507f1f77bcf86cd799439011",
-      "firstName": "john",
-      "lastName": "doe"
-    },
-    "blog": "607f1f77bcf86cd799439012",
-    "createdAt": "2026-06-02T12:00:00.000Z"
-  }
-}
-```
-
-**Status Codes**:
-- `201` - Comment added successfully
-- `400` - Invalid input
-- `401` - Unauthorized
-- `404` - Blog not found
-- `500` - Server error
-
----
-
-### 7. Like/Unlike Blog Post
-
-**Endpoint**: `POST /api/blogs/:blogId/like`
-
-**Description**: Like or unlike a blog post.
-
-**Request Headers**:
-```
-Authorization: Bearer <accessToken>
-```
-
-**Path Parameters**:
-- `blogId` (required): Blog post ID
-
-**Request Body**:
-```json
-{}
-```
-
-**Response** (200 - OK):
-```json
-{
-  "statusCode": 200,
-  "message": "Blog liked successfully",
-  "success": true,
-  "data": {
-    "likeCount": 45,
-    "isLiked": true
-  }
-}
-```
-
-**Status Codes**:
-- `200` - Like status toggled
-- `401` - Unauthorized
-- `404` - Blog not found
-- `500` - Server error
-
----
-
-## ❌ Error Responses
-
-### Standard Error Response Format
-
-All error responses follow this format:
-
-```json
-{
-  "statusCode": <HTTP_STATUS_CODE>,
-  "message": "<Error Message>",
-  "success": false,
-  "data": null,
-  "error": ["<Detailed Error 1>", "<Detailed Error 2>"]
-}
-```
-
-### Common Error Status Codes
-
-| Status Code | Description |
-|-------------|-------------|
-| `400` | Bad Request - Invalid input data |
-| `401` | Unauthorized - Missing or invalid token |
-| `403` | Forbidden - Insufficient permissions |
-| `404` | Not Found - Resource does not exist |
-| `409` | Conflict - Resource already exists |
-| `422` | Unprocessable Entity - Validation failed |
-| `500` | Internal Server Error - Server error |
-
-### Common HTTP Status Scenarios
-
-#### User Registration
-- ✅ `201` - User created
-- ❌ `400` - Invalid email/password
-- ❌ `409` - Email already exists
-- ❌ `422` - Validation failed
-
-#### Authentication
-- ✅ `200` - Login successful
-- ❌ `401` - Invalid credentials
-- ❌ `400` - Missing fields
-
-#### Blog Operations
-- ✅ `200` - Success
-- ❌ `401` - Not authenticated
-- ❌ `403` - Not blog author
-- ❌ `404` - Blog not found
-
-### Common Error Scenarios
-
-#### Missing Required Fields
-```json
-{
-  "statusCode": 400,
-  "message": "Validation Error",
-  "success": false,
-  "error": ["firstName is required", "email is required"]
-}
-```
-
-#### Invalid Token
-```json
-{
-  "statusCode": 401,
-  "message": "Unauthorized request",
-  "success": false,
-  "error": ["Invalid access token"]
-}
-```
-
-#### Resource Not Found
-```json
-{
-  "statusCode": 404,
-  "message": "Not Found",
-  "success": false,
-  "error": ["Blog post with this ID does not exist"]
-}
-```
-
----
-
-## 📤 Request/Response Examples
-
-### Complete Example: User Registration Flow
-
-#### 1. Register User
 ```bash
-curl -X POST http://localhost:5000/api/auth/register \
+curl -i -X POST http://localhost:5000/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "firstName": "John",
-    "lastName": "Doe",
-    "email": "john@example.com",
-    "password": "Secure123!"
+    "firstName": "Ritam",
+    "lastName": "Das",
+    "email": "ritam@example.com",
+    "password": "password123"
   }'
 ```
 
-**Response:**
-```json
-{
-  "statusCode": 201,
-  "message": "User registered successfully",
-  "success": true,
-  "data": {
-    "_id": "507f1f77bcf86cd799439011",
-    "firstName": "john",
-    "lastName": "doe",
-    "email": "john@example.com",
-    "avatar": ""
-  }
-}
-```
+Login:
 
----
-
-### Complete Example: Blog Creation Flow
-
-#### 1. Login User
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -i -X POST http://localhost:5000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "john@example.com",
-    "password": "Secure123!"
+    "email": "ritam@example.com",
+    "password": "password123"
   }'
 ```
 
-#### 2. Create Blog Post
+Logout:
+
 ```bash
-curl -X POST http://localhost:5000/api/blogs \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <accessToken>" \
-  -d '{
-    "title": "My First Blog",
-    "description": "This is my first blog post",
-    "content": "Welcome to my blog!",
-    "tags": ["first", "welcome"]
-  }'
-```
-
----
-
-### Complete Example: Image Upload
-
-#### 1. Upload with Avatar
-```bash
-curl -X PATCH http://localhost:5000/api/users/profile \
-  -H "Authorization: Bearer <accessToken>" \
-  -F "firstName=Jane" \
-  -F "lastName=Doe" \
-  -F "avatar=@/path/to/image.jpg"
-```
-
----
-
-## 🔐 Authentication
-
-### Token Management
-
-All protected endpoints require one of the following:
-
-1. **Bearer Token in Authorization Header**:
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-2. **Token in Cookie**:
-```
-Cookie: accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-### Token Details
-
-**Access Token**:
-- Expires in: 7 days
-- Contains: User ID, email, first name, last name
-- Use for: API requests
-
-**Refresh Token**:
-- Expires in: 30 days
-- Contains: User ID, email
-- Use for: Generating new access tokens
-
----
-
-## 🧪 Quick Test Commands
-
-### Register User
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"firstName":"John","lastName":"Doe","email":"john@example.com","password":"Pass123!"}'
-```
-
-### Login User
-```bash
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"john@example.com","password":"Pass123!"}'
-```
-
-### Get User Profile
-```bash
-curl -X GET http://localhost:5000/api/users/profile \
+curl -i -X POST http://localhost:5000/api/v1/auth/logout \
   -H "Authorization: Bearer <accessToken>"
 ```
 
-### Create Blog
+Upload avatar:
+
 ```bash
-curl -X POST http://localhost:5000/api/blogs \
-  -H "Content-Type: application/json" \
+curl -i -X POST http://localhost:5000/api/v1/auth/avatar \
   -H "Authorization: Bearer <accessToken>" \
-  -d '{"title":"My Blog","description":"Desc","content":"Content","tags":["tag1"]}'
+  -F "avatar=@/path/to/avatar.png"
 ```
 
-### Get All Blogs
-```bash
-curl -X GET "http://localhost:5000/api/blogs?page=1&limit=10&tag=nodejs"
-```
+## Models Overview
 
-### Get Single Blog
-```bash
-curl -X GET http://localhost:5000/api/blogs/<blogId>
-```
+### User
 
----
+| Field | Type | Notes |
+| --- | --- | --- |
+| `firstName` | String | Required, trimmed |
+| `lastName` | String | Required, trimmed |
+| `email` | String | Required, unique, trimmed |
+| `password` | String | Hashed before save when modified |
+| `googleId` | String | Defaults to empty string |
+| `loginType` | String | `GOOGLE` or `EMAIL_PASSWORD` |
+| `avatar` | String | Defaults to empty string |
+| `refreshToken` | String | Stores latest refresh token |
 
-## 🛠️ Environment Setup
+### Blog
 
-Required environment variables:
+| Field | Type | Notes |
+| --- | --- | --- |
+| `title` | String | Required |
+| `description` | String | Required |
+| `author` | ObjectId | References `User` |
+| `thumbnailImage` | String | Required |
+| `status` | String | `draft`, `published`, or `archived` |
+| `comments` | ObjectId[] | References `Comment` |
+| `likes` | ObjectId[] | References `Like` |
 
-```
-MONGO_URL=mongodb+srv://...
-JWT_TOKEN_SECRET=your_secret
-JWT_TOKEN_EXPIRES_IN=7d
-REFRESH_TOKEN_SECRET=your_secret
-REFRESH_TOKEN_EXPIRES_IN=30d
-CLOUDINARY_NAME=...
-CLOUDINARY_API_KEY=...
-CLOUDINARY_API_SECRET=...
-PORT=5000
-```
+### Comment
 
----
+| Field | Type | Notes |
+| --- | --- | --- |
+| `comment` | String | Required |
+| `blog` | ObjectId | References `Blog` |
+| `user` | ObjectId | References `User` |
 
-## 📚 Data Models Overview
+### Like
 
-### User Model
-```
-{
-  _id: ObjectId,
-  firstName: String,
-  lastName: String,
-  email: String (unique),
-  password: String (hashed),
-  avatar: String (URL),
-  refreshToken: String,
-  timestamps: { createdAt, updatedAt }
-}
-```
+| Field | Type | Notes |
+| --- | --- | --- |
+| `blog` | ObjectId | References `Blog` |
+| `user` | ObjectId | References `User` |
 
-### Blog Model (Expected)
-```
-{
-  _id: ObjectId,
-  title: String,
-  description: String,
-  content: String,
-  author: ObjectId (User),
-  tags: [String],
-  views: Number,
-  likes: [ObjectId] (User IDs),
-  comments: [ObjectId] (Comment IDs),
-  timestamps: { createdAt, updatedAt }
-}
-```
+## Not Yet Exposed
 
-### Comment Model (Expected)
-```
-{
-  _id: ObjectId,
-  comment: String,
-  author: ObjectId (User),
-  blog: ObjectId (Blog),
-  timestamps: { createdAt, updatedAt }
-}
-```
-
----
-
-## 🔗 API Flow Examples
-
-### User Registration & Login Flow
-1. `POST /api/auth/register` → Register
-2. `POST /api/auth/login` → Get tokens
-3. Use `accessToken` for subsequent requests
-
-### Blog Creation & Publishing Flow
-1. `POST /api/auth/login` → Authenticate
-2. `POST /api/blogs` → Create blog
-3. `PATCH /api/blogs/:blogId` → Update blog
-4. `GET /api/blogs/:blogId` → View blog
-
-### Reading & Interacting Flow
-1. `GET /api/blogs` → Browse blogs
-2. `GET /api/blogs/:blogId` → Read blog
-3. `POST /api/blogs/:blogId/comments` → Add comment
-4. `POST /api/blogs/:blogId/like` → Like blog
-
-### Refresh Token Flow
-```
-1. User calls /api/auth/login
-   ↓
-2. Get accessToken (7 days) and refreshToken (30 days)
-   ↓
-3. Use accessToken for API calls
-   ↓
-4. When accessToken expires, call /api/auth/refresh-token
-   ↓
-5. Get new accessToken and refreshToken
-```
-
----
-
-## 💾 Common Data Fields
-
-### Timestamps
-- `createdAt` - Creation time (ISO 8601)
-- `updatedAt` - Last update time (ISO 8601)
-
-### Pagination Response
-- `totalItems` - Total count
-- `currentPage` - Current page number
-- `totalPages` - Total pages
-- `limit` - Items per page
-
-### Query Parameters
-- `page` and `limit` for pagination, for example `?page=1&limit=10`
-- `tag` and `search` for filtering, for example `?tag=nodejs&search=mongodb`
-- `sort` and `order` for sorting, for example `?sort=createdAt&order=desc`
-
----
-
-## 📖 Response Time Expectations
-
-- Authentication: ~200ms
-- Blog retrieval: ~150-500ms
-- Blog creation: ~300-800ms
-- File upload: ~1-5s, depending on file size
-
----
-
-## ⚠️ Rate Limiting (Recommended Implementation)
-
-- General: 100 requests per 15 minutes
-- Authentication: 5 requests per 15 minutes
-- File upload: 10 requests per hour
-
----
-
-## 🚀 Performance Tips
-
-1. **Use pagination** for large datasets
-2. **Cache frequently accessed data**
-3. **Compress responses** with gzip
-4. **Use CDN** for image delivery
-5. **Index database fields** appropriately
-6. **Implement caching headers**
-
----
-
-## 📞 Troubleshooting
-
-### 401 Unauthorized
-- Check if token is included
-- Verify token is not expired
-- Check token secret in environment
-
-### 403 Forbidden
-- Verify you are the resource owner
-- Check user permissions
-
-### 404 Not Found
-- Verify resource ID is correct
-- Check if resource exists
-
-### 500 Server Error
-- Check server logs
-- Verify environment variables
-- Check database connection
-
----
-
-## 🧪 Testing with Postman
-
-1. Import the API collection in Postman
-2. Set up environment variables:
-   - `baseUrl`: `http://localhost:5000`
-   - `accessToken`: Token from login response
-   - `refreshToken`: Token from login response
-3. Test endpoints in sequence
-
----
-
-## 📝 API Versioning
-
-Current API Version: `v1`
-
-Future versions will use the format: `/api/v2/...`
-
----
-
-## 💡 Best Practices
-
-1. **Always use HTTPS in production**
-2. **Include proper authentication headers**
-3. **Handle error responses appropriately**
-4. **Implement rate limiting on client side**
-5. **Cache responses when appropriate**
-6. **Use pagination for large datasets**
-7. **Validate input data**
-
----
-
-## 📞 Support
-
-For API issues or questions, please refer to the main README or create an issue in the repository.
-
----
-
-**Last Updated**: June 2, 2026
-**API Status**: Development
+The codebase includes blog, comment, and like models, but there are currently no mounted routes for creating, listing, updating, or deleting blog posts, comments, or likes.

@@ -1,267 +1,212 @@
 # Blog App Backend
 
-A robust and scalable blog application backend built with Node.js, Express, and MongoDB. This application provides comprehensive user authentication, blog management, and file upload capabilities with JWT-based security.
+Node.js, Express, and MongoDB backend for a blog application. The current codebase focuses on user authentication, Google OAuth, JWT cookie/session handling, avatar upload plumbing, and shared MongoDB models for users, blogs, comments, and likes.
 
-## 🚀 Features
+The active API surface is mounted under:
 
-- **User Authentication**: Secure user registration and login with JWT tokens
-- **Password Security**: Bcrypt encryption for secure password storage
-- **Token Management**: Access token and refresh token system for enhanced security
-- **File Upload**: File upload support using Multer with cloud storage integration via Cloudinary
-- **API Error Handling**: Centralized error handling and standardized API responses
-- **CORS Support**: Cross-Origin Resource Sharing enabled for frontend integration
-- **Cookie Management**: Secure cookie-based token storage
-- **Async Error Handling**: Custom async handler for clean error management
-- **Database Integration**: MongoDB integration using Mongoose ODM
-
-## 📋 Prerequisites
-
-Before running this project, ensure you have:
-
-- **Node.js** (v14 or higher)
-- **npm** or **yarn** package manager
-- **MongoDB** (local or Atlas cloud database)
-- **Cloudinary Account** (for image uploads)
-- **Environment Variables** configured
-
-## 📁 Project Structure
-
-```
-server/
-├── src/
-│   ├── app.js                          # Express app configuration
-│   ├── index.js                        # Application entry point
-│   ├── constant.js                     # Application constants (database name)
-│   │
-│   ├── controllers/
-│   │   └── user.controllers.js         # User-related endpoint controllers
-│   │
-│   ├── models/
-│   │   └── user.model.js               # User schema and model definition
-│   │
-│   ├── routes/                         # API route definitions
-│   │
-│   ├── middlewares/
-│   │   ├── auth.middlewares.js         # JWT verification middleware
-│   │   └── multer.middlewares.js       # File upload middleware configuration
-│   │
-│   ├── db/
-│   │   └── connect.db.js               # MongoDB connection setup
-│   │
-│   ├── utils/
-│   │   ├── apierror.js                 # Centralized error response class
-│   │   ├── apiresponse.js              # Standardized API response class
-│   │   ├── asynchandler.js             # Async function error handler wrapper
-│   │   └── cloudinary.upload.js        # Cloudinary file upload integration
-│   │
-│   └── public/
-│       └── temp/                       # Temporary file storage for uploads
-│
-├── package.json                        # Project dependencies and scripts
-└── .env.example                        # Environment variables template (create as .env)
+```text
+/api/v1/auth
 ```
 
-## 🔧 Installation
+Detailed endpoint documentation lives in [server/API_DOCS.md](server/API_DOCS.md).
 
-1. **Clone the repository**
+## Current Features
+
+- Email/password user registration and login
+- Google OAuth login with Passport
+- JWT access and refresh token generation
+- HTTP-only auth cookies
+- Protected logout and avatar routes
+- Express request validation for register/login payloads
+- MongoDB connection through Mongoose
+- Password hashing with bcrypt
+- CORS, compression, cookies, sessions, request IP tracking, and rate limiting
+- Cloudinary upload helper and Multer local upload middleware
+- Blog, comment, and like Mongoose models prepared for future blog routes
+
+## Project Structure
+
+```text
+Blog-App/
+|-- README.md
+`-- server/
+    |-- API_DOCS.md
+    |-- package.json
+    |-- package-lock.json
+    `-- src/
+        |-- app.js
+        |-- index.js
+        |-- constant.js
+        |-- config/
+        |   `-- env.config.js
+        |-- controllers/
+        |   `-- user.controllers.js
+        |-- db/
+        |   `-- connect.db.js
+        |-- middlewares/
+        |   |-- auth.middlewares.js
+        |   `-- multer.middlewares.js
+        |-- models/
+        |   |-- blog.models.js
+        |   |-- comments.models.js
+        |   |-- like.controllers.js
+        |   `-- user.models.js
+        |-- passport/
+        |   `-- oauth.js
+        |-- routes/
+        |   `-- auth.router.js
+        |-- utils/
+        |   |-- apierror.js
+        |   |-- apiresponse.js
+        |   |-- asynchandler.js
+        |   `-- cloudinary.upload.js
+        `-- validators/
+            |-- validate.js
+            `-- auth/
+                `-- user.validators.js
+```
+
+## Requirements
+
+- Node.js 18 or newer recommended
+- npm
+- MongoDB connection string
+- Google OAuth credentials if using Google login
+- Cloudinary credentials if using avatar uploads
+
+## Installation
+
 ```bash
-git clone <repository-url>
-cd Blog-App/server
-```
-
-2. **Install dependencies**
-```bash
+cd server
 npm install
 ```
 
-3. **Create environment file**
-```bash
-cp .env.example .env
-```
-
-4. **Configure environment variables**
-
-Edit `.env` file and add the following variables:
+Create `server/.env`:
 
 ```env
-# Database Configuration
-MONGO_URL=mongodb+srv://<username>:<password>@<cluster>.mongodb.net
-
-# JWT Configuration
-JWT_TOKEN_SECRET=your_jwt_secret_key_here
-JWT_TOKEN_EXPIRES_IN=7d
-REFRESH_TOKEN_SECRET=your_refresh_token_secret_key_here
-REFRESH_TOKEN_EXPIRES_IN=30d
-
-# Cloudinary Configuration
-CLOUDINARY_NAME=your_cloudinary_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# Server Configuration
 PORT=5000
-NODE_ENV=development
+CORS_ORIGIN=http://localhost:3000
+
+MONGODB_URL=mongodb://127.0.0.1:27017
+
+JWT_TOKEN_SECRET=replace-with-access-token-secret
+JWT_TOKEN_EXPIRES_IN=1d
+REFRESH_TOKEN_SECRET=replace-with-refresh-token-secret
+REFRESH_TOKEN_EXPIRES_IN=10d
+
+SESSION_SECRET=replace-with-session-secret
+
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/v1/auth/google/callback
+
+CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
+CLOUDINARY_API_KEY=your-cloudinary-api-key
+CLOUDINARY_API_SECRET=your-cloudinary-api-secret
 ```
 
-## 📦 Dependencies
+Start the development server:
 
-### Production Dependencies
-- **express** (^5.2.1) - Web framework
-- **mongoose** (^9.6.3) - MongoDB ODM
-- **bcrypt** (^6.0.0) - Password hashing
-- **jsonwebtoken** (^9.0.3) - JWT token generation and verification
-- **multer** (^2.1.1) - File upload handling
-- **cloudinary** (^2.10.0) - Cloud file storage
-- **dotenv** (^17.4.2) - Environment variable management
-- **cors** (^2.8.6) - Cross-Origin Resource Sharing
-- **cookie-parser** (^1.4.7) - Cookie middleware
-
-### Development Dependencies
-- **nodemon** (^3.1.14) - Auto-restart development server
-
-## 🚀 Getting Started
-
-1. **Start the development server**
 ```bash
 npm start
 ```
 
-The server will start on `http://localhost:5000` (or your configured PORT)
+The server listens on `http://localhost:<PORT>` after MongoDB connects. The database name is `blogApp`, appended in `src/db/connect.db.js`.
 
-2. **Server will automatically restart** on file changes thanks to Nodemon
-
-## 📚 API Structure
-
-### Authentication Middleware
-- **Path**: `src/middlewares/auth.middlewares.js`
-- **Middleware**: `verifyJWT` - Validates JWT tokens from cookies or Authorization headers
-
-### User Model
-- **Location**: `src/models/user.model.js`
-- **Fields**:
-  - `firstName` (String, required) - User's first name
-  - `lastName` (String, required) - User's last name
-  - `email` (String, required, unique) - User's email
-  - `password` (String, required) - Encrypted password
-  - `avatar` (String) - User profile picture URL
-  - `refreshToken` (String) - Token for refreshing access token
-  - `timestamps` - Auto-generated createdAt and updatedAt
-
-### Key Methods
-- `comparePassword()` - Verify password during login
-- `generateAccessToken()` - Create short-lived access token
-- `generateRefreshToken()` - Create long-lived refresh token
-
-## 🔐 Security Features
-
-- **Password Encryption**: Passwords are hashed using bcrypt with salt rounds of 10
-- **JWT Authentication**: Tokens include user id, email, and name with configurable expiration
-- **Access Control**: Protected routes require valid JWT tokens
-- **CORS Configuration**: Controlled cross-origin requests
-- **Cookie Security**: Tokens stored securely in HTTP-only cookies
-- **Error Messages**: Standardized error responses without sensitive data exposure
-
-## 📁 Utility Functions
-
-### `asynchandler.js`
-Wrapper function for async route handlers to catch errors automatically and pass them to the next middleware.
-
-### `apierror.js`
-Standardized error class for consistent API error responses with:
-- Status code
-- Error message
-- Error details array
-- Success flag (false for errors)
-
-### `apiresponse.js`
-Standardized response class for consistent API responses with:
-- Status code
-- Message
-- Data payload
-- Success flag (true for responses with status < 400)
-
-## 🔄 File Upload
-
-### Multer Configuration
-- **Location**: `src/middlewares/multer.middlewares.js`
-- **Storage**: Temporary local storage in `src/public/temp/`
-- **File Naming**: Timestamp-based naming with original extension
-
-### Cloudinary Integration
-- **Location**: `src/utils/cloudinary.upload.js`
-- Handles file upload to cloud storage
-- Clean up temporary files after upload
-
-## 💾 Database
-
-- **Database Name**: `blogApp` (defined in `src/constant.js`)
-- **ODM**: Mongoose
-- **Connection**: Centralized in `src/db/connect.db.js`
-
-## 🛠 Development Workflow
-
-1. **Make changes** to your code
-2. **Nodemon automatically restarts** the server
-3. **Check console** for any errors or logs
-4. **Test API** endpoints using Postman or similar tools
-
-## 📝 Available Scripts
+## Available Script
 
 ```bash
-# Start development server with auto-reload
 npm start
-
-# Install dependencies
-npm install
 ```
 
-## 🤝 Contributing
+Runs `nodemon src/index.js`.
 
-When contributing to this project:
+## Active Routes
 
-1. Follow the existing code structure
-2. Use async/await with asyncHandler wrapper
-3. Use ApiResponse and ApiError for consistent responses
-4. Add proper error handling
-5. Document complex functions
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `POST` | `/api/v1/auth/register` | No | Create a user and issue tokens |
+| `POST` | `/api/v1/auth/login` | No | Log in and issue tokens |
+| `POST` | `/api/v1/auth/refresh` | No | Refresh tokens using the current `Token` input |
+| `POST` | `/api/v1/auth/logout` | Yes | Clear refresh token and auth cookies |
+| `POST` | `/api/v1/auth/avatar` | Yes | Upload avatar with multipart field `avatar` |
+| `GET` | `/api/v1/auth/google` | No | Start Google OAuth |
+| `GET` | `/api/v1/auth/google/callback` | No | Google OAuth callback |
 
-## 📖 Best Practices Implemented
+Protected routes accept either:
 
-- ✅ Centralized error handling
-- ✅ Standardized API responses
-- ✅ Environment variable management
-- ✅ Async/await patterns with error handling
-- ✅ JWT token management
-- ✅ Password security with bcrypt
-- ✅ CORS and cookie security
-- ✅ Modular project structure
-- ✅ Separation of concerns
+```text
+Authorization: Bearer <accessToken>
+```
 
-## 🚨 Troubleshooting
+or:
 
-### MongoDB Connection Failed
-- Verify `MONGO_URL` in `.env` file
-- Check if MongoDB instance is running
-- Ensure network access is allowed in MongoDB Atlas
+```text
+Cookie: accessToken=<accessToken>
+```
 
-### JWT Errors
-- Verify `JWT_TOKEN_SECRET` is set in `.env`
-- Check token expiration time
-- Ensure token is being sent correctly in requests
+## Data Models
 
-### File Upload Issues
-- Check if `src/public/temp/` directory exists
-- Verify Cloudinary credentials are correct
-- Ensure file permissions are set properly
+### User
 
-## 📞 Support
+Fields: `firstName`, `lastName`, `email`, `password`, `googleId`, `loginType`, `avatar`, `refreshToken`, timestamps.
 
-For issues or questions, please check the project documentation or create an issue in the repository.
+Model methods:
 
-## 📄 License
+- `comparePassword(password)`
+- `generateAccessToken()`
+- `generateRefreshToken()`
 
-ISC License
+### Blog
 
----
+Fields: `title`, `description`, `author`, `thumbnailImage`, `status`, `comments`, `likes`, timestamps.
 
-**Happy Coding!** 🎉
+Allowed statuses: `draft`, `published`, `archived`.
+
+### Comment
+
+Fields: `comment`, `blog`, `user`, timestamps.
+
+### Like
+
+Fields: `blog`, `user`, timestamps.
+
+## Response Format
+
+Successful responses use `ApiResponse`:
+
+```json
+{
+  "statusCode": 200,
+  "data": {},
+  "message": "Success",
+  "success": true
+}
+```
+
+Error responses use `ApiError`:
+
+```json
+{
+  "statusCode": 400,
+  "data": null,
+  "message": "Error message",
+  "success": false,
+  "error": []
+}
+```
+
+## Known Current Limitations
+
+- Blog, comment, and like models exist, but no blog/comment/like routes are mounted in `app.js` yet.
+- `POST /api/v1/auth/refresh` currently looks for a field named `Token` and then references `userId`, which is not defined in that controller path.
+- `POST /api/v1/auth/avatar` currently destructures `req.file.path` as `{ avatarPath }`, so avatar upload may fail until that controller uses the uploaded file path directly.
+- Auth cookies are set with `secure: true`, so cookie-based auth requires HTTPS-compatible clients or adjusted local development settings.
+
+## Development Notes
+
+- Keep routes under `src/routes` and mount them in `src/app.js`.
+- Wrap async controllers with `asyncHandler`.
+- Return API payloads through `ApiResponse` and `ApiError`.
+- Add validators in `src/validators` for request body checks.
+- Keep new environment variables documented here and in `server/API_DOCS.md`.
