@@ -174,6 +174,19 @@ const setAvatar = asyncHandler( async ( req, res ) =>
 } )
 
 
+const socialLogin = asyncHandler( async ( req, res ) =>
+{
+    const user = req.user
+    if ( !user )
+    {
+        return res.status( 401 ).json( new ApiError( 401, "Unauthorized request", [ "User not found" ] ) )
+    }
+    const { accessToken, refreshToken } = await generateTokenPair( user._id )
+    return res.status( 200 )
+        .cookie( "accessToken", accessToken, options )
+        .cookie( "refreshToken", refreshToken, options )
+        .json( new ApiResponse( 200, "Google logged in successfully", user ) )
+})
 
 
 
@@ -188,32 +201,6 @@ const setAvatar = asyncHandler( async ( req, res ) =>
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-export { registerUser, loginUser, logoutUser, refreshAccessToken, setAvatar }
+export { registerUser, loginUser, logoutUser, refreshAccessToken, setAvatar , socialLogin}
 
 

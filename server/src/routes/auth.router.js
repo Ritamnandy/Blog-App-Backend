@@ -8,7 +8,7 @@ import { verifyJWT } from '../middlewares/auth.middlewares.js'
 import
 {
     registerUser, loginUser,
-    logoutUser,
+    logoutUser, socialLogin,
     refreshAccessToken, setAvatar
 } from '../controllers/user.controllers.js'
 import { userRegisterValidators, userLoginValidators } from '../validators/auth/user.validators.js'
@@ -34,10 +34,8 @@ route.route( '/google/callback' ).get(
         {
             failureRedirect: '/login'
         }
-    ), ( req, res ) =>
-{
-    res.status( 200 ).json( new ApiResponse( 200, "User logged in successfully", req.user ) )
-} )
+    ), socialLogin
+)
 
 
 
