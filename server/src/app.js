@@ -62,5 +62,4 @@ import userRouter from './routes/auth.router.js'
 app.use( '/api/v1/auth', userRouter )
 
 
-
 export { app }

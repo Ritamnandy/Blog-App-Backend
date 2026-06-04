@@ -60,7 +60,7 @@ const registerUser = asyncHandler( async ( req, res ) =>
     return res.status( 201 )
         .cookie( "accessToken", accessToken, options )
         .cookie( "refreshToken", refreshToken, options )
-        .json( new ApiResponse( 201, "User created successfully", newUser ) )
+        .json( new ApiResponse( 201, "User created successfully", { accessToken: accessToken, refreshToken: refreshToken, user: newUser } ) )
 } )
 
 
@@ -93,7 +93,7 @@ const loginUser = asyncHandler( async ( req, res ) =>
     return res.status( 200 )
         .cookie( "accessToken", accessToken, options )
         .cookie( "refreshToken", refreshToken, options )
-        .json( new ApiResponse( 200, "User logged in successfully", loginedInUser ) )
+        .json( new ApiResponse( 200, "User logged in successfully", { accessToken: accessToken, refreshToken: refreshToken, user: loginedInUser } ) )
 } )
 
 
@@ -185,8 +185,8 @@ const socialLogin = asyncHandler( async ( req, res ) =>
     return res.status( 200 )
         .cookie( "accessToken", accessToken, options )
         .cookie( "refreshToken", refreshToken, options )
-        .json( new ApiResponse( 200, "Google logged in successfully", user ) )
-})
+        .json( new ApiResponse( 200, "Google logged in successfully", { accessToken: accessToken, refreshToken: refreshToken, user: user } ) )
+} )
 
 
 
@@ -201,6 +201,6 @@ const socialLogin = asyncHandler( async ( req, res ) =>
 
 
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, setAvatar , socialLogin}
+export { registerUser, loginUser, logoutUser, refreshAccessToken, setAvatar, socialLogin }
 
 
