@@ -16,7 +16,11 @@ passport.use(
         {
             try
             {
-                const user = await User.findOne( { email: profile?.email } )
+                const email = profile?._json?.email;
+                const firstName = profile?._json?.given_name;
+                const lastName = profile?._json?.family_name;
+                const picture = profile?._json?.picture;
+                const user = await User.findOne( { email } )
                 if ( user )
                 {
                     return done( null, user )
@@ -25,13 +29,17 @@ passport.use(
                 {
                     throw new ApiError( "Google auth error", 400 )
                 }
-                const avatarUrl = await uploadCloudinary( profile?.photos[ 0 ].value )
+                const avatarResponse = await uploadCloudinary( picture );
+                if ( !avatarResponse )
+                {
+                    throw new ApiError( "Google auth error", 400 )
+                }
                 const newUser = await User.create(
                     {
-                        firstName: profile[ 0 ]?.name?.givenName,
-                        lastName: profile[ 0 ]?.name?.familyName,
-                        email: profile[ 0 ]?.email,
-                        avatar: avatarUrl.url,
+                        firstName,
+                        lastName,
+                        email,
+                        avatar: avatarResponse.url,
                         loginType: userLoginType.GOOGLE,
                         googleId: profile?.id
                     }
@@ -39,7 +47,7 @@ passport.use(
                 return done( null, newUser )
             } catch ( error )
             {
-                console.log( "Google auth error:- ", error );
+                console.log( "Google auth error:- ", error.message );
 
             }
         }
