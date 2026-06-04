@@ -14,12 +14,12 @@ import
 import { userRegisterValidators, userLoginValidators } from '../validators/auth/user.validators.js'
 import { validate } from '../validators/validate.js'
 
-const route = express.Router()
+const Router = express.Router()
 
 /// oauth using google
 
 
-route.route( '/google' ).get(
+Router.route( '/google' ).get(
     passport.authenticate( 'google',
         {
             scope: [ 'email', 'profile' ]
@@ -29,7 +29,7 @@ route.route( '/google' ).get(
 
 
 
-route.route( '/google/callback' ).get(
+Router.route( '/google/callback' ).get(
     passport.authenticate( 'google',
         {
             failureRedirect: '/login'
@@ -45,15 +45,15 @@ route.route( '/google/callback' ).get(
 
 /// Unsecured routes
 
-route.route( '/register' ).post( userRegisterValidators(), validate, registerUser )
-route.route( '/login' ).post( userLoginValidators(), validate, loginUser )
-route.route( '/refresh' ).post( refreshAccessToken )
+Router.route( '/register' ).post( userRegisterValidators(), validate, registerUser )
+Router.route( '/login' ).post( userLoginValidators(), validate, loginUser )
+Router.route( '/refresh' ).post( refreshAccessToken )
 
 
 /// Secured routes
 
-route.route( '/logout' ).post( verifyJWT, logoutUser )
-route.route( '/avatar' ).post( verifyJWT, upload.single( 'avatar' ), setAvatar )
+Router.route( '/logout' ).post( verifyJWT, logoutUser )
+Router.route( '/avatar' ).post( verifyJWT, upload.single( 'avatar' ), setAvatar )
 
 
-export default userRouter
+export default Router

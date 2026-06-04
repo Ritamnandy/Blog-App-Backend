@@ -1,3 +1,5 @@
+import dotenv from 'dotenv'
+dotenv.config()
 
 import passport from 'passport'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
@@ -6,6 +8,9 @@ import { ApiError } from '../utils/apierror.js'
 import { uploadCloudinary } from '../utils/cloudinary.upload.js'
 import { userLoginType } from '../constant.js'
 
+console.log( "GOOGLE_CLIENT_ID =", process.env.GOOGLE_CLIENT_ID );
+console.log( "GOOGLE_CLIENT_SECRET =", process.env.GOOGLE_CLIENT_SECRET );
+console.log( "GOOGLE_CALLBACK_URL =", process.env.GOOGLE_CALLBACK_URL );
 
 passport.use(
     new GoogleStrategy(
@@ -14,7 +19,7 @@ passport.use(
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
             callbackURL: process.env.GOOGLE_CALLBACK_URL,
         },
-        async function ( _, _, profile, done )
+        async function ( _, __, profile, done )
         {
             try
             {
@@ -30,9 +35,9 @@ passport.use(
                 const avatarUrl = await uploadCloudinary( profile?.photos[ 0 ].value )
                 const newUser = await User.create(
                     {
-                        firstName: profile?.name?.givenName,
-                        lastName: profile?.name?.familyName,
-                        email: profile?.email,
+                        firstName: profile[ 0 ]?.name?.givenName,
+                        lastName: profile[ 0 ]?.name?.familyName,
+                        email: profile[ 0 ]?.email,
                         avatar: avatarUrl.url,
                         loginType: userLoginType.GOOGLE,
                         googleId: profile?.id
