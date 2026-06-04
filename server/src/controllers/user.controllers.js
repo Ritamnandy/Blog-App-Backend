@@ -60,7 +60,7 @@ const registerUser = asyncHandler( async ( req, res ) =>
     return res.status( 201 )
         .cookie( "accessToken", accessToken, options )
         .cookie( "refreshToken", refreshToken, options )
-        .json( new ApiResponse( 201, "User created successfully", { accessToken: accessToken, refreshToken: refreshToken, user: newUser } ) )
+        .json( new ApiResponse( 201, "User created successfully", [{ accessToken: accessToken }, {refreshToken: refreshToken}, { user: newUser }] ) )
 } )
 
 
@@ -93,7 +93,7 @@ const loginUser = asyncHandler( async ( req, res ) =>
     return res.status( 200 )
         .cookie( "accessToken", accessToken, options )
         .cookie( "refreshToken", refreshToken, options )
-        .json( new ApiResponse( 200, "User logged in successfully", { accessToken: accessToken, refreshToken: refreshToken, user: loginedInUser } ) )
+        .json( new ApiResponse( 200, "User logged in successfully", [{ accessToken: accessToken }, {refreshToken: refreshToken}, {user: loginedInUser }] ) )
 } )
 
 
@@ -140,7 +140,7 @@ const refreshAccessToken = asyncHandler( async ( req, res ) =>
     return res.status( 200 )
         .cookie( "accessToken", accessToken, options )
         .cookie( "refreshToken", refreshToken, options )
-        .json( new ApiResponse( 200, "Access token refreshed successfully", { accessToken, refreshToken } ) )
+        .json( new ApiResponse( 200, "Access token refreshed successfully", [ {accessToken: accessToken }, { refreshToken: refreshToken} ] ) )
 } )
 //+++++ upload avatar on server and cloudinary +++++
 
@@ -185,7 +185,7 @@ const socialLogin = asyncHandler( async ( req, res ) =>
     return res.status( 200 )
         .cookie( "accessToken", accessToken, options )
         .cookie( "refreshToken", refreshToken, options )
-        .json( new ApiResponse( 200, "Google logged in successfully", { accessToken: accessToken, refreshToken: refreshToken, user: user } ) )
+        .json( new ApiResponse( 200, "Google logged in successfully", [ { accessToken: accessToken },{ refreshToken: refreshToken}, {user: user }] ) )
 } )
 
 
