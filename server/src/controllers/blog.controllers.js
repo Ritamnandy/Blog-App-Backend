@@ -12,7 +12,7 @@ const addBlog = asyncHandler( async ( req, res ) =>
 {
     const { title, description, status } = req.body
     const { _id: userId } = req.user
-    const { blogImage } = req.file.path
+    const blogImage = req.file?.path || null;
     if ( !title && !description && !status )
     {
         return res.status( 400 ).json( new ApiError( 400, "All fields are required", [ "All fields are required" ] ) )
@@ -53,15 +53,18 @@ const updateBlog = asyncHandler( async ( req, res ) =>
     {
         return res.status( 400 ).json( new ApiError( 400, "All fields are required", [ "All fields are required" ] ) )
     }
-    const blog = await Blog.findById( blogId )
+    const blog = await Blog.findByIdAndUpdate( blogId, {
+        $set: {
+            title,
+            description,
+            status
+        }
+    }, { new: true } )
     if ( !blog )
     {
         return res.status( 404 ).json( new ApiError( 404, "Blog not found", [ "Blog not found" ] ) )
     }
-    blog.title = title
-    blog.description = description
-    blog.status = status
-    await blog.save( { validateBeforeSave: false } )
+
     return res.status( 200 ).json( new ApiResponse( 200, "Blog updated successfully", blog ) )
 } )
 
@@ -88,6 +91,8 @@ const getAllBlogs = asyncHandler( async ( req, res ) =>
 const addComment = asyncHandler( async ( req, res ) =>
 {
     const { comment } = req.body
+    const { _id: userId } = req.user;
+    const blogId = req.params.id
     if ( !comment )
     {
         return res.status( 400 ).json( new ApiError( 400, "comment is required", [ "comment is required" ] ) )
@@ -96,12 +101,10 @@ const addComment = asyncHandler( async ( req, res ) =>
     {
         return res.status( 400 ).json( new ApiError( 400, "comment is required", [ "comment is required" ] ) )
     }
-    const { _id: userId } = req.user;
     if ( !userId )
     {
         return res.status( 401 ).json( new ApiError( 401, "Unauthorized request", [ "Unauthorized request" ] ) )
     }
-    const blogId = req.params.id
     const blog = await Blog.findById( blogId )
     if ( !blog )
     {
@@ -118,7 +121,7 @@ const addComment = asyncHandler( async ( req, res ) =>
 
 const updateComment = asyncHandler( async ( req, res ) =>
 {
-    const { commentId } = req.params
+    const commentId = req.params.id
     const { comment: inComingComment } = req.body
     if ( !commentId )
     {
@@ -206,4 +209,9 @@ const removeLike = asyncHandler( async ( req, res ) =>
 
 
 
-export { addBlog, updateBlog, deleteBlog, getAllBlogs ,addComment,updateComment,deleteComment,addLike,removeLike}
+export
+{
+    addBlog, updateBlog, deleteBlog,
+    getAllBlogs, addComment, updateComment,
+    deleteComment, addLike, removeLike
+}

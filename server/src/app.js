@@ -57,9 +57,10 @@ app.use( limiter )
 /// import router 
 
 import userRouter from './routes/auth.routes.js'
-
+import blogRouter from "./routes/blog.routes.js"
 
 app.use( '/api/v1/auth', userRouter )
+app.use( '/api/v1/blog', blogRouter )
 
 
 export { app }
