@@ -34,12 +34,10 @@ const blogSchema = new mongoose.Schema( {
             ref: "Comment"
         }
     ],
-    likes: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Like",
-        }
-    ]
+    likes: {
+        type: Number,
+        default: 0
+    }
 }, { timestamps: true } )
 
 const Blog = mongoose.model( "Blog", blogSchema )

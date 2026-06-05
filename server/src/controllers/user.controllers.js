@@ -147,7 +147,7 @@ const refreshAccessToken = asyncHandler( async ( req, res ) =>
 const setAvatar = asyncHandler( async ( req, res ) =>
 {
     const { _id: userId } = req.user
-    const { avatarPath } = req.file?.path
+    const { avatar: avatarPath } = req.file?.path
     if ( !userId )
     {
         return res.status( 401 ).json( new ApiError( 401, "Unauthorized request", [ "User not found" ] ) )

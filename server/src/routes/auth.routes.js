@@ -1,7 +1,6 @@
 
 
 import express from 'express'
-import { ApiResponse } from '../utils/apiresponse.js'
 import passport from 'passport'
 import { upload } from '../middlewares/multer.middlewares.js'
 import { verifyJWT } from '../middlewares/auth.middlewares.js'
