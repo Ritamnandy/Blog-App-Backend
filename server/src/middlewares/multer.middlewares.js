@@ -9,7 +9,7 @@ const Storage = multer.diskStorage(
         },
         filename: function ( req, file, cb )
         {
-            cb( null, Date.now().toLocaleString() + "-" + file.originalname )
+            cb( null, file.originalname )
         }
     }
 )

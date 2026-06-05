@@ -12,8 +12,11 @@ cloudinary.config( {
 
 const uploadCloudinary = async ( filePath ) =>
 {
+
     try
     {
+        console.log( "filepath:- ", filePath );
+
         if ( !filePath )
         {
             console.log( "file not provide" );
@@ -28,7 +31,7 @@ const uploadCloudinary = async ( filePath ) =>
     } catch ( error )
     {
         fs.unlinkSync( filePath )
-        console.log( "cloudinary upload error:- ", error.message );
+        console.log( "cloudinary upload error:- ", error );
         return null;
     }
 }

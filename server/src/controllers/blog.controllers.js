@@ -17,7 +17,7 @@ const addBlog = asyncHandler( async ( req, res ) =>
     {
         return res.status( 400 ).json( new ApiError( 400, "All fields are required", [ "All fields are required" ] ) )
     }
-    if ( title === "" && description === "" && status === "" )
+    if ( title === "" && description === "" )
     {
         return res.status( 400 ).json( new ApiError( 400, "All fields are required", [ "All fields are required" ] ) )
     }
@@ -91,7 +91,6 @@ const getAllBlogs = asyncHandler( async ( req, res ) =>
 const addComment = asyncHandler( async ( req, res ) =>
 {
     const { comment } = req.body
-    const { _id: userId } = req.user;
     const blogId = req.params.id
     if ( !comment )
     {
@@ -101,21 +100,16 @@ const addComment = asyncHandler( async ( req, res ) =>
     {
         return res.status( 400 ).json( new ApiError( 400, "comment is required", [ "comment is required" ] ) )
     }
-    if ( !userId )
-    {
-        return res.status( 401 ).json( new ApiError( 401, "Unauthorized request", [ "Unauthorized request" ] ) )
-    }
     const blog = await Blog.findById( blogId )
     if ( !blog )
     {
         return res.status( 404 ).json( new ApiError( 404, "Blog not found", [ "Blog not found" ] ) )
     }
-    const comment = await Comment.create( {
+    const newComment = await Comment.create( {
         comment,
         blog: new mongoose.Types.ObjectId( blogId ),
-        user: new mongoose.Types.ObjectId( userId )
     } )
-    return res.status( 201 ).json( new ApiResponse( 201, "Comment added successfully", comment ) )
+    return res.status( 201 ).json( new ApiResponse( 201, "Comment added successfully", newComment ) )
 
 } )
 
