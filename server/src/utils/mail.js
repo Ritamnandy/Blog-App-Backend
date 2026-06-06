@@ -6,6 +6,7 @@ import mailgen from 'mailgen'
 
 const sendVerificationEmail = async ( userEmail, userName, VerificationCode ) =>
 {
+
     const transporter = nodemailer.createTransport( {
         service: "gmail",
         auth: {
@@ -17,11 +18,14 @@ const sendVerificationEmail = async ( userEmail, userName, VerificationCode ) =>
         theme: "default",
         product: {
             name: "Blog App",
+            link: "https://blog-app-ten.vercel.app/",
+            logo: process.env.APP_LOGO,
+            logoHeight: "120px"
         }
     } )
     const email = {
         body: {
-            name: "Hello " + userName,
+            name: userName,
             intro: "Welcome to Blog App! We're very excited to have you on board.",
             action: {
                 instructions: "To verify your account, Use this code:",
@@ -31,7 +35,7 @@ const sendVerificationEmail = async ( userEmail, userName, VerificationCode ) =>
                     link: "#",
                 },
             },
-            outro:"Code will expire in 5 minutes",
+            outro: "Code will expire in 5 minutes",
             outro: "Need help, or have questions? Just reply to this email, we\'d love to help.",
         },
     };

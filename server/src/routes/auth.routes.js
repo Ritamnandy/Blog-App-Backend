@@ -8,7 +8,8 @@ import
 {
     registerUser, loginUser,
     logoutUser, socialLogin,
-    refreshAccessToken, setAvatar
+    refreshAccessToken, setAvatar,
+    verifyEmail, resendVerificationCode
 } from '../controllers/user.controllers.js'
 import { userRegisterValidators, userLoginValidators } from '../validators/auth/user.validators.js'
 import { validate } from '../validators/validate.js'
@@ -16,9 +17,6 @@ import { validate } from '../validators/validate.js'
 const Router = express.Router()
 
 /// oauth using google
-
-
-
 
 
 Router.route( '/google' ).get(
@@ -48,6 +46,8 @@ Router.route( '/google/callback' ).get(
 /// Unsecured routes
 
 Router.route( '/register' ).post( userRegisterValidators(), validate, registerUser )
+Router.route( '/verify-email' ).post( verifyEmail )
+Router.route( '/resend-code' ).post( resendVerificationCode )
 Router.route( '/login' ).post( userLoginValidators(), validate, loginUser )
 Router.route( '/refresh' ).post( refreshAccessToken )
 

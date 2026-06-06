@@ -251,7 +251,9 @@ const refreshAccessToken = asyncHandler( async ( req, res ) =>
 const setAvatar = asyncHandler( async ( req, res ) =>
 {
     const { _id: userId } = req.user
-    const { avatar: avatarPath } = req.file?.path
+    const avatarPath  = req.file?.path
+    console.log( avatarPath );
+    
     if ( !userId )
     {
         return res.status( 401 ).json( new ApiError( 401, "Unauthorized request", [ "User not found" ] ) )
@@ -297,6 +299,12 @@ const socialLogin = asyncHandler( async ( req, res ) =>
 
 
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, setAvatar, socialLogin }
+export
+{
+    registerUser, loginUser,
+    logoutUser, refreshAccessToken,
+    setAvatar, socialLogin,
+    verifyEmail, resendVerificationCode
+}
 
 
