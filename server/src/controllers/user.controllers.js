@@ -115,7 +115,7 @@ const verifyEmail = asyncHandler( async ( req, res ) =>
     user.verificationCodeExpiresAt = null
     await user.save( { validateBeforeSave: false } )
     const { accessToken, refreshToken } = await generateTokenPair( user._id )
-    if ( !accessToken || !refreshToken )
+    if ( !accessToken && !refreshToken )
     {
         return res.status( 500 ).json( new ApiError( 500, "Server error", [ "Failed to generate token pair" ] ) )
     }
@@ -251,9 +251,9 @@ const refreshAccessToken = asyncHandler( async ( req, res ) =>
 const setAvatar = asyncHandler( async ( req, res ) =>
 {
     const { _id: userId } = req.user
-    const avatarPath  = req.file?.path
+    const avatarPath = req.file?.path
     console.log( avatarPath );
-    
+
     if ( !userId )
     {
         return res.status( 401 ).json( new ApiError( 401, "Unauthorized request", [ "User not found" ] ) )
