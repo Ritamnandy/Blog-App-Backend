@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import { userLoginType } from "../constant.js"
+import { use } from "react";
 
 const userSchema = new mongoose.Schema( {
     firstName: {
@@ -37,6 +38,20 @@ const userSchema = new mongoose.Schema( {
         type: String,
         enum: userLoginType,
         default: userLoginType.EMAIL_PASSWORD
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    verificationCode: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    verificationCodeExpiresAt: {
+        type: Date,
+        trim: true,
+        
     },
     avatar: {
         type: String,

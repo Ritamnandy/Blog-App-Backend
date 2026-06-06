@@ -4,14 +4,13 @@ import nodemailer from 'nodemailer'
 import mailgen from 'mailgen'
 
 
-const sendMail = async ( userEmail, userName ) =>
+const sendVerificationEmail = async ( userEmail, userName, VerificationCode ) =>
 {
     const transporter = nodemailer.createTransport( {
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
+        service: "gmail",
         auth: {
-            user: process.env.SMTP_USERNAME,
-            pass: process.env.SMTP_PASSWORD
+            user: process.env.EMAIL,
+            pass: process.env.APP_PASSWORD
         }
     } )
     const mailGenerator = new mailgen( {
@@ -25,14 +24,15 @@ const sendMail = async ( userEmail, userName ) =>
             name: "Hello " + userName,
             intro: "Welcome to Blog App! We're very excited to have you on board.",
             action: {
-                instructions: "To verify your account, click here:",
+                instructions: "To verify your account, Use this code:",
                 button: {
                     color: "#bc621d",
-                    text: "Verify Account",
-                    link: "https://yourwebsite.com/verify",
+                    text: VerificationCode.toString(),
+                    link: "#",
                 },
             },
-            outro: "Need help? Just reply to this email.",
+            outro:"Code will expire in 5 minutes",
+            outro: "Need help, or have questions? Just reply to this email, we\'d love to help.",
         },
     };
 
@@ -57,4 +57,4 @@ const sendMail = async ( userEmail, userName ) =>
     }
 }
 
-export { sendMail }
+export { sendVerificationEmail }
