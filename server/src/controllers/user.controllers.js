@@ -48,11 +48,11 @@ const registerUser = asyncHandler( async ( req, res ) =>
 {
     const { firstName, lastName, email, password } = req.body
 
-    if ( !firstName && !lastName && !email && !password )
+    if ( !firstName || !lastName || !email || !password )
     {
         return res.status( 400 ).json( new ApiError( 400, "Missing required fields", [ "firstName", "lastName", "email", "password" ] ) )
     }
-    if ( firstName === "" && lastName === "" && email === "" && password === "" )
+    if ( firstName === "" || lastName === "" || email === "" || password === "" )
     {
         return res.status( 400 ).json( new ApiError( 400, "Missing required fields", [ "firstName", "lastName", "email", "password" ] ) )
     }
@@ -85,11 +85,11 @@ const registerUser = asyncHandler( async ( req, res ) =>
 const verifyEmail = asyncHandler( async ( req, res ) =>
 {
     const { email, code } = req.body
-    if ( !email && !code )
+    if ( !email || !code )
     {
         return res.status( 400 ).json( new ApiError( 400, "Missing required fields", [ "Missing required fields" ] ) )
     }
-    if ( email === "" && code === "" )
+    if ( email === "" || code === "" )
     {
         return res.status( 400 ).json( new ApiError( 400, "Missing required fields", [ "Missing required fields" ] ) )
     }
@@ -124,7 +124,7 @@ const verifyEmail = asyncHandler( async ( req, res ) =>
     return res.status( 200 )
         .cookie( "accessToken", accessToken, options )
         .cookie( "refreshToken", refreshToken, options )
-        .json( new ApiResponse( 200, "Email verified successfully", [ "Email verified successfully", createdUser ] ) )
+        .json( new ApiResponse( 200, "Email verified successfully", [ { accessToken: accessToken, refreshToken: refreshToken }, { user: createdUser } ] ) )
 
 
 } )
@@ -147,6 +147,8 @@ const resendVerificationCode = asyncHandler( async ( req, res ) =>
     {
         return res.status( 404 ).json( new ApiError( 404, "User not found", [ "User not found" ] ) )
     }
+    // console.log(user);
+    
     if ( user.isVerified )
     {
         return res.status( 400 ).json( new ApiError( 400, "Email is already verified", [ "Email is already verified" ] ) )
@@ -169,11 +171,11 @@ const resendVerificationCode = asyncHandler( async ( req, res ) =>
 const loginUser = asyncHandler( async ( req, res ) =>
 {
     const { email, password } = req.body
-    if ( !email && !password )
+    if ( !email || !password )
     {
         return res.status( 400 ).json( new ApiError( 400, "Missing required fields", [ "email", "password" ] ) )
     }
-    if ( email === "" && password === "" )
+    if ( email === "" || password === "" )
     {
         return res.status( 400 ).json( new ApiError( 400, "Missing required fields", [ "email", "password" ] ) )
     }
@@ -295,9 +297,14 @@ const socialLogin = asyncHandler( async ( req, res ) =>
 } )
 
 
+// ++++++++ forget password +++++++
 
-
-
+const forgetPassword =asyncHandler(async (req,res) => {
+    const { email, newPassword, code } = req.body
+    if(!email || !newPassword || !code){
+        return res.status(400).json(new ApiError(400, "All fields are required", ["All fields are required"]))
+    }
+})
 
 export
 {

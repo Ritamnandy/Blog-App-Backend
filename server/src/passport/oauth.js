@@ -58,7 +58,7 @@ passport.deserializeUser( async function ( id, done )
 {
     try
     {
-        const user = await User.findById( id ).select( "-password -refreshToken" )
+        const user = await User.findById( id ).select( "-password -refreshToken -googleId -loginType -isVerified -verificationCode -verificationCodeExpiresAt" )
         if ( !user )
         {
             return done( "User not found", null )
