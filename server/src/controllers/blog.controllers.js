@@ -82,7 +82,39 @@ const deleteBlog = asyncHandler( async ( req, res ) =>
 
 const getAllBlogs = asyncHandler( async ( req, res ) =>
 {
-    const blogs = await Blog.find()
+    const blogs = await Blog.aggregate( [
+        {
+            $lookup: {
+                from: "comments",
+                localField: "_id",
+                foreignField: "blog",
+                as: "comments",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            comment: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                title: 1,
+                description: 1,
+                likes: 1,
+                status: 1,
+                thumbnailImage: 1,
+                comments: 1
+            }
+        }
+    ] )
+    if(!blogs)
+    {
+        return res.status( 404 ).json( new ApiError( 404, "Blogs not found", [ "Blogs not found" ] ) )
+    }
     return res.status( 200 ).json( new ApiResponse( 200, "Blogs fetched successfully", blogs ) )
 } )
 

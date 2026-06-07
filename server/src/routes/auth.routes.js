@@ -10,7 +10,8 @@ import
     logoutUser, socialLogin,
     refreshAccessToken, setAvatar,
     verifyEmail, resendVerificationCode,
-    forgetPassword, sendresetPasswordMail
+    forgetPassword, sendresetPasswordMail,
+    getMyBlogs
 } from '../controllers/user.controllers.js'
 import { userRegisterValidators, userLoginValidators } from '../validators/auth/user.validators.js'
 import { validate } from '../validators/validate.js'
@@ -59,6 +60,7 @@ Router.route( '/refresh' ).post( refreshAccessToken )
 
 Router.route( '/logout' ).post( verifyJWT, logoutUser )
 Router.route( '/avatar' ).post( verifyJWT, upload.single( 'avatar' ), setAvatar )
+Router.route( '/myallblogs' ).get( verifyJWT, getMyBlogs )
 
 
 export default Router

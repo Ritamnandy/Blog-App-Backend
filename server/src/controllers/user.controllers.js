@@ -6,6 +6,7 @@ import { asyncHandler } from "../utils/asynchandler.js"
 import { uploadCloudinary } from "../utils/cloudinary.upload.js"
 import { sendVerificationEmail, sendForgotPasswordEmail } from "../utils/mail.js"
 import jwt from "jsonwebtoken"
+import mongoose from "mongoose"
 
 const options = {
     httpOnly: true,
@@ -207,6 +208,8 @@ const loginUser = asyncHandler( async ( req, res ) =>
 
 const logoutUser = asyncHandler( async ( req, res ) =>
 {
+    console.log("login");
+    
     const { _id: userId } = req.user
     if ( !userId )
     {
@@ -359,7 +362,66 @@ const forgetPassword = asyncHandler( async ( req, res ) =>
     return res.status( 200 ).json( new ApiResponse( 200, "Password updated successfully" ) )
 } )
 
+// +++++ get my blogs +++++
 
+const getMyBlogs= asyncHandler(async (req,res) => {
+    const { _id: userId } = req.user
+    const myBlogs = await User.aggregate( [
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId( userId )
+            }
+        },
+        {
+            $lookup: {
+                from: "blogs",
+                localField: "_id",
+                foreignField: "author",
+                as: "blog",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "comments",
+                            localField: "_id",
+                            foreignField: "blog",
+                            as: "comments",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        _id: 1,
+                                        comment: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $project: {
+                            title: 1,
+                            description: 1,
+                            thumbnailImage: 1,
+                            status: 1,
+                            likes: 1,
+                            comments: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $project: {
+                blog: 1,
+                _id: 1,
+                email: 1
+            }
+        }
+    ] )
+    if(!myBlogs)
+    {
+        return res.status( 404 ).json( new ApiError( 404, "Blogs not found", [ "Blogs not found" ] ) )
+    }
+    return res.status( 200 ).json( new ApiResponse( 200, "My blogs fetched successfully", myBlogs ) )
+})
 
 
 export
@@ -368,7 +430,8 @@ export
     logoutUser, refreshAccessToken,
     setAvatar, socialLogin,
     verifyEmail, resendVerificationCode,
-    forgetPassword, sendresetPasswordMail
+    forgetPassword, sendresetPasswordMail,
+    getMyBlogs
 }
 
 
