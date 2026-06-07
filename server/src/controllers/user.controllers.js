@@ -4,7 +4,7 @@ import { ApiError } from "../utils/apierror.js"
 import { ApiResponse } from "../utils/apiresponse.js"
 import { asyncHandler } from "../utils/asynchandler.js"
 import { uploadCloudinary } from "../utils/cloudinary.upload.js"
-import { sendVerificationEmail } from "../utils/mail.js"
+import { sendVerificationEmail, sendForgotPasswordEmail } from "../utils/mail.js"
 import jwt from "jsonwebtoken"
 
 const options = {
@@ -148,7 +148,7 @@ const resendVerificationCode = asyncHandler( async ( req, res ) =>
         return res.status( 404 ).json( new ApiError( 404, "User not found", [ "User not found" ] ) )
     }
     // console.log(user);
-    
+
     if ( user.isVerified )
     {
         return res.status( 400 ).json( new ApiError( 400, "Email is already verified", [ "Email is already verified" ] ) )
@@ -296,22 +296,79 @@ const socialLogin = asyncHandler( async ( req, res ) =>
         .json( new ApiResponse( 200, "Google logged in successfully", [ { accessToken: accessToken }, { refreshToken: refreshToken }, { user: user } ] ) )
 } )
 
+// +++++ send reset Password Mail +++++++
+
+const sendresetPasswordMail = asyncHandler( async ( req, res ) =>
+{
+    const { email } = req.body
+    if ( !email )
+    {
+        return res.status( 400 ).json( new ApiError( 400, "Missing required fields", [ "Missing required fields" ] ) )
+    }
+    if ( email === "" )
+    {
+        return res.status( 400 ).json( new ApiError( 400, "Missing required fields", [ "Missing required fields" ] ) )
+    }
+    const user = await User.findOne( { email } )
+    if ( !user )
+    {
+        return res.status( 404 ).json( new ApiError( 404, "User not found", [ "User not found" ] ) )
+    }
+    const verificationCode = getVerificationCode()
+    const verificationCodeExpiresAt = getExpiryTime()
+    user.verificationCode = verificationCode
+    user.verificationCodeExpiresAt = verificationCodeExpiresAt
+    await user.save( { validateBeforeSave: false } )
+    const userName = user.firstName + " " + user.lastName
+    await sendForgotPasswordEmail( email, userName, verificationCode, )
+    return res.status( 200 )
+        .json( new ApiResponse( 200, "Verification code sent successfully", [ "Verification code sent successfully" ] ) )
+} )
+
 
 // ++++++++ forget password +++++++
 
-const forgetPassword =asyncHandler(async (req,res) => {
+const forgetPassword = asyncHandler( async ( req, res ) =>
+{
     const { email, newPassword, code } = req.body
-    if(!email || !newPassword || !code){
-        return res.status(400).json(new ApiError(400, "All fields are required", ["All fields are required"]))
+    if ( !email || !newPassword || !code )
+    {
+        return res.status( 400 ).json( new ApiError( 400, "All fields are required", [ "All fields are required" ] ) )
     }
-})
+    if ( email === "" || newPassword === "" || code === "" )
+    {
+        return res.status( 400 ).json( new ApiError( 400, "All fields are required", [ "All fields are required" ] ) )
+    }
+    const user = await User.findOne( { email: email } )
+    if ( !user )
+    {
+        return res.status( 404 ).json( new ApiError( 404, "User not found", [ "User not found" ] ) )
+    }
+    // console.log( user.verificationCode + "  code :- " + code );
+
+    if ( user.verificationCode !== code )
+    {
+        return res.status( 400 ).json( new ApiError( 400, "Invalid OTP", [ "Invalid OTP" ] ) )
+    }
+    if ( Date.now() > user.verificationCodeExpiresAt )
+    {
+        return res.status( 400 ).json( new ApiError( 400, "OTP expired", [ "OTP expired" ] ) )
+    }
+    user.password = newPassword
+    await user.save( { validateBeforeSave: false } )
+    return res.status( 200 ).json( new ApiResponse( 200, "Password updated successfully" ) )
+} )
+
+
+
 
 export
 {
     registerUser, loginUser,
     logoutUser, refreshAccessToken,
     setAvatar, socialLogin,
-    verifyEmail, resendVerificationCode
+    verifyEmail, resendVerificationCode,
+    forgetPassword, sendresetPasswordMail
 }
 
 

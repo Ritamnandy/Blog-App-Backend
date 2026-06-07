@@ -9,7 +9,8 @@ import
     registerUser, loginUser,
     logoutUser, socialLogin,
     refreshAccessToken, setAvatar,
-    verifyEmail, resendVerificationCode
+    verifyEmail, resendVerificationCode,
+    forgetPassword, sendresetPasswordMail
 } from '../controllers/user.controllers.js'
 import { userRegisterValidators, userLoginValidators } from '../validators/auth/user.validators.js'
 import { validate } from '../validators/validate.js'
@@ -48,6 +49,8 @@ Router.route( '/google/callback' ).get(
 Router.route( '/register' ).post( userRegisterValidators(), validate, registerUser )
 Router.route( '/verify-email' ).post( verifyEmail )
 Router.route( '/resend-code' ).post( resendVerificationCode )
+Router.route( '/send-reset-password-mail' ).post( sendresetPasswordMail )
+Router.route( '/forget-password' ).post( forgetPassword )
 Router.route( '/login' ).post( userLoginValidators(), validate, loginUser )
 Router.route( '/refresh' ).post( refreshAccessToken )
 
