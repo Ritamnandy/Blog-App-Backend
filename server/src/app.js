@@ -36,7 +36,7 @@ app.use( passport.session() )
 const limiter = rateLimit(
     {
         windowMs: 15 * 60 * 1000,
-        max: 1000,
+        max: 500,
         standardHeaders: true,
         legacyHeaders: false,
         keyGenerator: ( req, res ) =>
