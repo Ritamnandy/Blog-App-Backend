@@ -111,9 +111,11 @@ const sendForgotPasswordEmail = async ( userEmail, userName, VerificationCode ) 
     try
     {
         await transporter.sendMail( mailOptions )
+        console.log( "SMTP Ready" );
     } catch ( error )
     {
         console.log( "mail error:- ", error );
+        throw error
 
     }
 }

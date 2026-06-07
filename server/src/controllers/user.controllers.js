@@ -62,8 +62,13 @@ const registerUser = asyncHandler( async ( req, res ) =>
     {
         return res.status( 400 ).json( new ApiError( 400, "User already exists", [ "User with this email already exists" ] ) )
     }
+
     const verificationCode = getVerificationCode()
     const verificationCodeExpiresAt = getExpiryTime()
+
+    const userName = firstName + " " + lastName
+    await sendVerificationEmail( email, userName, verificationCode )
+
     const createdUser = await User.create( {
         firstName, lastName,
         email, password,
@@ -74,8 +79,7 @@ const registerUser = asyncHandler( async ( req, res ) =>
     {
         return res.status( 500 ).json( new ApiError( 500, "Server error", [ "Failed to create user" ] ) )
     }
-    const userName = createdUser.firstName + " " + createdUser.lastName
-    await sendVerificationEmail( email, userName, verificationCode )
+
     return res.status( 201 )
         .json( new ApiResponse( 201, "User created successfully,Check your email for verification", [ "Check your email for verification" ] ) )
 } )
@@ -156,11 +160,13 @@ const resendVerificationCode = asyncHandler( async ( req, res ) =>
     }
     const verificationCode = getVerificationCode()
     const verificationCodeExpiresAt = getExpiryTime()
+
+    const userName = user.firstName + " " + user.lastName
+    await sendVerificationEmail( email, userName, verificationCode )
+
     user.verificationCode = verificationCode
     user.verificationCodeExpiresAt = verificationCodeExpiresAt
     await user.save( { validateBeforeSave: false } )
-    const userName = user.firstName + " " + user.lastName
-    await sendVerificationEmail( email, userName, verificationCode )
     return res.status( 200 )
         .json( new ApiResponse( 200, "Verification code sent successfully", [ "Verification code sent successfully" ] ) )
 } )
@@ -208,8 +214,8 @@ const loginUser = asyncHandler( async ( req, res ) =>
 
 const logoutUser = asyncHandler( async ( req, res ) =>
 {
-    console.log("login");
-    
+    console.log( "login" );
+
     const { _id: userId } = req.user
     if ( !userId )
     {
@@ -319,11 +325,13 @@ const sendresetPasswordMail = asyncHandler( async ( req, res ) =>
     }
     const verificationCode = getVerificationCode()
     const verificationCodeExpiresAt = getExpiryTime()
+
+    const userName = user.firstName + " " + user.lastName
+    await sendForgotPasswordEmail( email, userName, verificationCode, )
+    
     user.verificationCode = verificationCode
     user.verificationCodeExpiresAt = verificationCodeExpiresAt
     await user.save( { validateBeforeSave: false } )
-    const userName = user.firstName + " " + user.lastName
-    await sendForgotPasswordEmail( email, userName, verificationCode, )
     return res.status( 200 )
         .json( new ApiResponse( 200, "Verification code sent successfully", [ "Verification code sent successfully" ] ) )
 } )
@@ -364,7 +372,8 @@ const forgetPassword = asyncHandler( async ( req, res ) =>
 
 // +++++ get my blogs +++++
 
-const getMyBlogs= asyncHandler(async (req,res) => {
+const getMyBlogs = asyncHandler( async ( req, res ) =>
+{
     const { _id: userId } = req.user
     const myBlogs = await User.aggregate( [
         {
@@ -416,12 +425,12 @@ const getMyBlogs= asyncHandler(async (req,res) => {
             }
         }
     ] )
-    if(!myBlogs)
+    if ( !myBlogs )
     {
         return res.status( 404 ).json( new ApiError( 404, "Blogs not found", [ "Blogs not found" ] ) )
     }
     return res.status( 200 ).json( new ApiResponse( 200, "My blogs fetched successfully", myBlogs ) )
-})
+} )
 
 
 export
