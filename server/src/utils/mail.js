@@ -9,8 +9,8 @@ const sendVerificationEmail = async ( userEmail, userName, VerificationCode ) =>
 
     const transporter = nodemailer.createTransport( {
         service: "smtp.gmail.com",
-        port: process.env.SMPT_PORT,
-        secure: false,
+        port: 465,
+        secure: true,
         auth: {
             user: process.env.EMAIL,
             pass: process.env.APP_PASSWORD
@@ -70,8 +70,8 @@ const sendForgotPasswordEmail = async ( userEmail, userName, VerificationCode ) 
 
     const transporter = nodemailer.createTransport( {
         service: "smtp.gmail.com",
-        port: process.env.SMPT_PORT,
-        secure: false,
+        port: 465,
+        secure: true,
         auth: {
             user: process.env.EMAIL,
             pass: process.env.APP_PASSWORD
