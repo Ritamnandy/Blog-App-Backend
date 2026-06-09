@@ -299,10 +299,16 @@ const socialLogin = asyncHandler( async ( req, res ) =>
         return res.status( 401 ).json( new ApiError( 401, "Unauthorized request", [ "User not found" ] ) )
     }
     const { accessToken, refreshToken } = await generateTokenPair( user._id )
+    const createdUser = await User.findById( user._id, ).select( "-password -refreshToken -googleId -loginType -isVerified -verificationCode -verificationCodeExpiresAt" )
+    if ( !createdUser )
+    {
+        return res.status( 404 ).json( new ApiError( 404, "User not found", [ "User not found" ] ) )
+    }
+
     return res.status( 200 )
         .cookie( "accessToken", accessToken, options )
         .cookie( "refreshToken", refreshToken, options )
-        .json( new ApiResponse( 200, "Google logged in successfully", [ { accessToken: accessToken }, { refreshToken: refreshToken }, { user: user } ] ) )
+        .json( new ApiResponse( 200, "Google logged in successfully", [ { accessToken: accessToken }, { refreshToken: refreshToken }, { user: createdUser } ] ) )
 } )
 
 // +++++ send reset Password Mail +++++++
@@ -328,7 +334,7 @@ const sendresetPasswordMail = asyncHandler( async ( req, res ) =>
 
     const userName = user.firstName + " " + user.lastName
     await sendForgotPasswordEmail( email, userName, verificationCode, )
-    
+
     user.verificationCode = verificationCode
     user.verificationCodeExpiresAt = verificationCodeExpiresAt
     await user.save( { validateBeforeSave: false } )

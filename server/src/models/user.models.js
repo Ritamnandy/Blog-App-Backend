@@ -26,7 +26,8 @@ const userSchema = new mongoose.Schema( {
     },
     password: {
         type: String,
-        trim: true
+        trim: true,
+        default: "",
     },
     googleId: {
         type: String,
@@ -50,6 +51,7 @@ const userSchema = new mongoose.Schema( {
     verificationCodeExpiresAt: {
         type: Date,
         trim: true,
+        default: null
 
     },
     avatar: {
@@ -58,7 +60,8 @@ const userSchema = new mongoose.Schema( {
     },
     refreshToken: {
         type: String,
-        trim: true
+        trim: true,
+        default: ""
     }
 }, { timestamps: true } )
 

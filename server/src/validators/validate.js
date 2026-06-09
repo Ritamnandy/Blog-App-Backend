@@ -4,10 +4,13 @@ import { ApiError } from "../utils/apierror.js"
 
 export const validate = ( req, res, next ) =>
 {
+    console.log(req.body);
+    
     const errors = validationResult( req )
     if ( errors.isEmpty() )
     {
         return next()
+        
     }
     const extractErrors = []
     errors.array().map( ( err ) => extractErrors.push( { [ err.path ]: err.msg } ) )

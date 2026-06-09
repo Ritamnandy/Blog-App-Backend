@@ -36,7 +36,8 @@ passport.use(
                         lastName,
                         email,
                         loginType: userLoginType.GOOGLE,
-                        googleId: profile?.id
+                        googleId: profile?.id,
+                        isVerified: true,
                     }
                 )
                 return done( null, newUser )
